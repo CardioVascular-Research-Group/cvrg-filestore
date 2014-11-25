@@ -1,0 +1,48 @@
+<project name="cvrg-filestore">
+	
+	<path id="utility.classpath">
+		
+		<fileset dir="/opt/liferay/liferay-plugins-sdk-6.1.1/tools/portlet_jsf_tmpl/docroot/WEB-INF/lib">
+			<include name="*.jar"/>
+		</fileset>
+		<fileset dir="/opt/liferay/utility-jars">
+			<include name="*.jar"/>
+		</fileset>
+		<fileset dir="/opt/liferay/waveform3/tomcat-7.0.27/lib">
+			<include name="*.jar"/>
+		</fileset>
+		<fileset dir="/opt/liferay/waveform3/tomcat-7.0.27/lib/ext">
+			<include name="*.jar"/>
+		</fileset>
+		<fileset dir="/opt/liferay/waveform3/tomcat-7.0.27/webapps/ROOT/WEB-INF/lib">
+			<include name="*.jar"/>
+		</fileset>
+				
+	</path>
+	
+	<target name="all">
+		<antcall target="clean" />
+		<antcall target="jar" />
+	</target>
+	
+    <target name="clean">
+        <delete dir="build"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="build/classes"/>
+        <javac includeantruntime="false" srcdir="src" destdir="build/classes" source="1.7" target="1.7" debug="true">
+        	<classpath refid="utility.classpath"/>
+        	<compilerarg value="-Xlint:unchecked"/>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="build/jar"/>
+        <jar destfile="/opt/liferay/utility-jars/cvrg-filestore.jar" basedir="build/classes"/>
+        <jar destfile="/opt/liferay/portlet-opt/cvrg-filestore.jar" basedir="build/classes"/>
+    	<copy todir="/opt/liferay/waveform3/tomcat-7.0.27/lib/ext" file="/opt/liferay/portlet-opt/cvrg-filestore.jar" />
+    	<copy todir="/opt/liferay/projects-dependencies/waveform-utilities-dependencies" file="/opt/liferay/portlet-opt/cvrg-filestore.jar" />
+    </target>
+
+</project>
