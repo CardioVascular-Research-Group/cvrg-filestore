@@ -1,7 +1,5 @@
 package edu.jhu.cvrg.filestore.main;
 
-import java.io.InputStream;
-
 import edu.jhu.cvrg.filestore.model.ECGFile;
 
 public class HadoopFileStorer extends FileStorer {

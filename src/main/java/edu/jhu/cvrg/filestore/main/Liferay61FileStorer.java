@@ -18,7 +18,6 @@ limitations under the License.
 * @author Chris Jurado, Mike Shipway, Brandon Benitez
 * 
 */
-import java.io.InputStream;
 import java.util.List;
 
 import org.apache.log4j.Logger;

@@ -199,7 +199,10 @@ public class Liferay61FileTree extends FileTree {
 				}
 			}
 
-		} catch (SystemException | PortalException e) {
+		} catch (SystemException e){
+			getLog().error("Unable to retrieve folder " + folderName);
+			e.printStackTrace();
+		} catch (PortalException e) {
 			getLog().error("Unable to retrieve folder " + folderName);
 			e.printStackTrace();
 		}
