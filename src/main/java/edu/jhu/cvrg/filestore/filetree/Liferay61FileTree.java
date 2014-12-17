@@ -1,40 +1,40 @@
 package edu.jhu.cvrg.filestore.filetree;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.apache.log4j.Logger;
 
-import com.liferay.faces.portal.context.LiferayFacesContext;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.repository.model.Folder;
-import com.liferay.portal.service.ServiceContext;
-import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
-
-import edu.jhu.cvrg.waveform.utility.ResourceUtility;
+import edu.jhu.cvrg.filestore.enums.EnumFileStoreType;
+import edu.jhu.cvrg.filestore.exception.FSException;
+import edu.jhu.cvrg.filestore.main.FileStoreFactory;
+import edu.jhu.cvrg.filestore.main.FileStorer;
+import edu.jhu.cvrg.filestore.model.FSFile;
+import edu.jhu.cvrg.filestore.model.FSFolder;
 
 public class Liferay61FileTree extends FileTree {
 
 	private long waveformRootFolderId = 0L;
 	private long userRootFolderId = 0L;
-	private long groupId = 0L;
 	private long userId = 0L;
 	private FileNode treeRoot;
+	private FileStorer filestore;
+	private String extentionFilter = "hea";
 
 	public Liferay61FileTree(String[] args) {
 
-		this.groupId = Long.valueOf(args[0]);
+		//args[0] = GROUP ID
 		this.userId = Long.valueOf(args[1]);
-
-		if (args.length > 2) {
-			waveformRootFolderId = findFolderIDByName(args[2]);
-		}
+		//args[2] = COMPANY ID
+		
+		filestore = FileStoreFactory.returnFileStore(EnumFileStoreType.LIFERAY_61, args);
+		
 		if (args.length > 3) {
-			userRootFolderId = findFolderIDByName(args[3]);
+			waveformRootFolderId = findFolderIDByName(args[3]);
+		}
+		if (args.length > 4) {
+			userRootFolderId = findFolderIDByName(args[4]);
 			if (userRootFolderId == 0L) {
-				userRootFolderId = createUserFolder(userId).getFolderId();
+				userRootFolderId = createUserFolder().getId();
 			}
 		}
 		buildTree();
@@ -43,10 +43,10 @@ public class Liferay61FileTree extends FileTree {
 	@Override
 	protected void buildTree() {
 
-		Folder rootFolder = getUserRootFolder();
+		FSFolder rootFolder = getUserRootFolder();
 
 		if (rootFolder != null) {
-			treeRoot = new FileNode(null, rootFolder.getName(), rootFolder.getFolderId(), 0L);
+			treeRoot = new FileNode(null, rootFolder.getName(), rootFolder.getId());
 			addChildren(rootFolder, treeRoot);
 
 		} else {
@@ -55,80 +55,69 @@ public class Liferay61FileTree extends FileTree {
 	}
 	
 	@Override
-	public void addFolder(UUID parentNodeUuid, String newFolderName) {
-		ServiceContext serviceContext = LiferayFacesContext.getInstance().getServiceContext();
-		FileNode parentNode = findNodeByUuid(parentNodeUuid);
-		new FileNode(parentNode, newFolderName, 0L, 0L);
+	public void addFolder(long parentNodeUuid, String newFolderName) {
 		
-		long parentFolderId = parentNode.getDocumentRecordId();
+		FileNode parentNode = findNodeByUuid(parentNodeUuid);
+		
+		long parentFolderId = parentNode.getUuid();
 		try {
-			DLAppLocalServiceUtil.addFolder(userId, groupId, parentFolderId, newFolderName, "", serviceContext);
-		} catch (PortalException e) {
-			e.printStackTrace();
-		} catch (SystemException e) {
+			FSFolder newFolder = filestore.addFolder(parentFolderId, newFolderName);
+			new FileNode(parentNode, newFolder.getName(), newFolder.getId());
+			
+		} catch (FSException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	@Override
-	public void deleteNode(UUID uuid){
+	public void deleteNode(long uuid){
 
 		FileNode node = findNodeByUuid(uuid);
 		if(node == null){
 			return;
 		}
-		if(node.isFolder()){
-			long folderId = findFolderIDByName(node.getName());
-			try {
-				DLAppLocalServiceUtil.deleteFolder(folderId);
-			} catch (PortalException e) {
-				e.printStackTrace();
-			} catch (SystemException e) {
-				e.printStackTrace();
+		try {
+			if(node.isFolder()){
+				long folderId = findFolderIDByName(node.getName());
+				filestore.deleteFolder(folderId);
 			}
-		}
-		else{
-			FileNode parentNode = node.getParent();
-			long parentFolderId = findFolderIDByName(parentNode.getName());
-			long fileEntryId = findFileIDByName(node.getName(), parentFolderId);
-			try {
-				DLAppLocalServiceUtil.deleteFileEntry(fileEntryId);
-			} catch (PortalException e) {
-				e.printStackTrace();
-			} catch (SystemException e) {
-				e.printStackTrace();
+			else{
+				FileNode parentNode = node.getParent();
+				long parentFolderId = findFolderIDByName(parentNode.getName());
+				long fileEntryId = findFileIDByName(node.getName(), parentFolderId);
+				filestore.deleteFile(fileEntryId);
 			}
+		} catch (FSException e) {
+			e.printStackTrace();
 		}
 	}
 	
 	private long findFileIDByName(String fileName, long parentFolderId){
 		try {
-			List<FileEntry> files = DLAppLocalServiceUtil.getFileEntries(0, parentFolderId);
-			for (FileEntry fileEntry : files) {
-				if (fileEntry.getTitle().equals(fileName)) {
-					return fileEntry.getFileEntryId();
+			List<FSFile> files = filestore.getFiles(parentFolderId, true);
+			for (FSFile fileEntry : files) {
+				if (fileEntry.getName().equals(fileName)) {
+					return fileEntry.getId();
 				}
 			}
-		} catch (SystemException e) {
+		} catch (FSException e) {
 			getLog().error("Unable to retrieve folder " + fileName);
 			e.printStackTrace();
-		} catch (PortalException e) {
-			e.printStackTrace();
-		}
+		} 
 
 		return 0L;
 	}
 	
-	private FileNode findNodeByUuid(UUID nodeId){
+	private FileNode findNodeByUuid(long nodeId){
 		
-		if(treeRoot.getUuid().toString().equals(nodeId.toString())){
+		if(treeRoot.getUuid() == nodeId){
 			return treeRoot;
 		}
 		
 		return checkChildNodes(treeRoot, nodeId);
 	}
 	
-	private FileNode checkChildNodes(FileNode parentNode, UUID nodeId){
+	private FileNode checkChildNodes(FileNode parentNode, long nodeId){
 		
 		FileNode searchNode = null;
 		
@@ -137,7 +126,7 @@ public class Liferay61FileTree extends FileTree {
 		}
 		
 		for(FileNode node : parentNode.getChildren()){
-			if(node.getUuid().equals(nodeId)){
+			if(node.getUuid() == nodeId){
 				return node;
 			}
 			else{
@@ -150,28 +139,21 @@ public class Liferay61FileTree extends FileTree {
 		return searchNode;
 	}
 
-	private Folder getUserRootFolder(){
-		
+	private FSFolder getUserRootFolder(){
 		try {
-			return DLAppLocalServiceUtil.getFolder(userRootFolderId);
-		} catch (PortalException e) {
+			return filestore.getFolder(userRootFolderId);
+		} catch (FSException e) {
 			e.printStackTrace();
-		} catch (SystemException e) {
 			getLog().warn("User root folder does not exist.  Creating.");
-			return createUserFolder(userId);
+			return createUserFolder();
 		}
-		return null;
 	}
 
-	private Folder createUserFolder(long userId) {
-
-		ServiceContext serviceContext = LiferayFacesContext.getInstance().getServiceContext();
+	private FSFolder createUserFolder() {
 
 		try {
-			return DLAppLocalServiceUtil.addFolder(userId, groupId,	waveformRootFolderId, String.valueOf(userId), "", serviceContext);
-		} catch (PortalException e) {
-			e.printStackTrace();
-		} catch (SystemException e) {
+			return filestore.addFolder(waveformRootFolderId, String.valueOf(userId));
+		} catch (FSException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -180,32 +162,29 @@ public class Liferay61FileTree extends FileTree {
 	private long searchFolderTreeByName(long parentFolderId, String folderName){
 
 		try {	
-			List<Folder> folders = DLAppLocalServiceUtil.getFolders(ResourceUtility.getCurrentGroupId(), parentFolderId);
+			List<FSFolder> folders = filestore.getFolders(parentFolderId);
 
 			if(folders == null){
 				return 0L;
 			}
 			
-			for (Folder folder : folders) {
+			for (FSFolder folder : folders) {
 
 				if (folder.getName().equals(folderName)) {
-					return folder.getFolderId();
+					return folder.getId();
 				}
 				else{
-					long folderId = searchFolderTreeByName(folder.getFolderId(), folderName);
+					long folderId = searchFolderTreeByName(folder.getId(), folderName);
 					if(folderId != 0L){
 						return folderId;
 					}
 				}
 			}
 
-		} catch (SystemException e){
-			getLog().error("Unable to retrieve folder " + folderName);
-			e.printStackTrace();
-		} catch (PortalException e) {
-			getLog().error("Unable to retrieve folder " + folderName);
+		} catch (FSException e) {
 			e.printStackTrace();
 		}
+		
 		return 0L;
 	}
 
@@ -234,26 +213,24 @@ public class Liferay61FileTree extends FileTree {
 //		return 0L;
 	}
 
-	private void addChildren(Folder parentFolder, FileNode parentNode) {
+	private void addChildren(FSFolder parentFolder, FileNode parentNode) {
 
 		try {
-			for (FileEntry file : DLAppLocalServiceUtil.getFileEntries(parentFolder.getGroupId(), parentFolder.getFolderId())) {
-				new FileNode(parentNode, file.getTitle(), file.getFileEntryId(), 0L, false);
+			for (FSFile file : filestore.getFiles(parentFolder.getId(), true)) {
+				if(extentionFilter == null || extentionFilter.equalsIgnoreCase(file.getExtension())){
+					new FileNode(parentNode, file.getName(), file.getId(), false);	
+				}
 			}
-		} catch (PortalException e) {
-			e.printStackTrace();
-		} catch (SystemException e) {
+		} catch (FSException e) {
 			e.printStackTrace();
 		}
 
 		try {
-			for (Folder childFolder : DLAppLocalServiceUtil.getFolders(parentFolder.getGroupId(), parentFolder.getFolderId())) {
-				addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getFolderId(), 0L, true));
+			for (FSFolder childFolder : filestore.getFolders(parentFolder.getId())) {
+				addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true));
 			}
 
-		} catch (SystemException e) {
-			e.printStackTrace();
-		} catch (PortalException e) {
+		} catch (FSException e) {
 			e.printStackTrace();
 		}
 	}

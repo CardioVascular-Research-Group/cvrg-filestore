@@ -1,34 +1,34 @@
 package edu.jhu.cvrg.filestore.filetree;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-public class FileNode {
+public class FileNode implements Serializable{
 
+	private static final long serialVersionUID = -121741741906128195L;
+	
 	private Object content = null;
-	private long documentRecordId = 0L;
-	private long analysisJobId = 0L;
+	private Long documentRecordId = null;
+	private Long analysisJobId = null;
 	private FileNode parentNode = null;
 	private List<FileNode> childNodes = null;
 	private boolean isFolder = true;
-	private UUID uuid = java.util.UUID.randomUUID();
+	private long uuid ;
 	private String name = "";
 	
-	public FileNode(FileNode parentNode, String name, long documentRecordId, long analysisJobId){
-		initialize(parentNode, name, documentRecordId, analysisJobId, true);
+	public FileNode(FileNode parentNode, String name, long uuid){
+		initialize(parentNode, name, uuid, true);
 	}
 	
-	public FileNode(FileNode parentNode, String name, long documentRecordId, long analysisJobId, boolean isFolder){
-		initialize(parentNode, name, documentRecordId, analysisJobId, isFolder);
+	public FileNode(FileNode parentNode, String name, long uuid, boolean isFolder){
+		initialize(parentNode, name, uuid, isFolder);
 	}
 	
-	private void initialize(FileNode parentNode, String name, long documentRecordId, long analysisJobId, boolean isFolder){
-//		this.content = content;
+	private void initialize(FileNode parentNode, String name, long uuid, boolean isFolder){
 		this.name = name;
 		this.parentNode = parentNode;
-		this.documentRecordId = documentRecordId;
-		this.analysisJobId = analysisJobId;
+		this.uuid = uuid;
 		this.isFolder = isFolder;
 		
 		if(parentNode!=null){
@@ -67,11 +67,11 @@ public class FileNode {
 		return childNodes == null;
 	}
 	
-	public long getDocumentRecordId(){
+	public Long getDocumentRecordId(){
 		return this.documentRecordId;
 	}
 	
-	public long getAnalysisJobId(){
+	public Long getAnalysisJobId(){
 		return this.analysisJobId;
 	}
 
@@ -83,7 +83,15 @@ public class FileNode {
 		return parentNode;
 	}
 
-	public UUID getUuid() {
+	public long getUuid() {
 		return uuid;
+	}
+
+	public void setDocumentRecordId(Long documentRecordId) {
+		this.documentRecordId = documentRecordId;
+	}
+
+	public void setAnalysisJobId(Long analysisJobId) {
+		this.analysisJobId = analysisJobId;
 	}
 }

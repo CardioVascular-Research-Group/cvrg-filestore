@@ -1,8 +1,5 @@
 package edu.jhu.cvrg.filestore.model;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
 import edu.jhu.cvrg.filestore.enums.EnumFileType;
 
 /*
@@ -26,9 +23,6 @@ limitations under the License.
 */
 public class ECGFile {
 
-	private byte[] ecgDataFile;
-	private String fileName = "";
-	private long fileSize = 0;
 	private int channels = 1;
 	private float sampFrequency = 250;
 	private String subjectID = "";
@@ -41,30 +35,17 @@ public class ECGFile {
 	private int numberOfPoints = 0;
 	private String date = "1/1/2013";
 	private EnumFileType fileType;
+	
+	private FSFile file;
+	private FSFile pair;
+	private String treePath;
 
-	public ECGFile(byte[] fileBytes, String fileName, long fileSize, 
-			String subjectID, String recordName,
-			String datatype, String studyID) {
+	public ECGFile(String subjectID, String recordName, String datatype, String studyID) {
 
-		this.ecgDataFile = fileBytes;
-		this.fileName = fileName;
-		this.fileSize = fileSize;
 		this.subjectID = subjectID;
 		this.recordName = recordName;
 		this.datatype = datatype;
 		this.studyID = studyID;
-	}
-	
-	public String getFileExtension(){
-		return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-	}
-	
-	public String getFileName() {
-		return fileName;
-	}
-
-	public long getFileSize() {
-		return fileSize;
 	}
 	
 	public void setChannels(int channels){
@@ -131,12 +112,28 @@ public class ECGFile {
 		this.fileType = fileType;
 	}
 
-	public InputStream getEcgDataFileAsInputStream(){
-		return new ByteArrayInputStream(ecgDataFile);
+	public FSFile getPair() {
+		return pair;
 	}
 
-	public byte[] getEcgDataFileAsBytes() {
-		return ecgDataFile;
+	public void setPair(FSFile pair) {
+		this.pair = pair;
+	}
+
+	public String getTreePath() {
+		return treePath;
+	}
+
+	public void setTreePath(String treePath) {
+		this.treePath = treePath;
+	}
+
+	public FSFile getFile() {
+		return file;
+	}
+
+	public void setFile(FSFile file) {
+		this.file = file;
 	}
 
 }

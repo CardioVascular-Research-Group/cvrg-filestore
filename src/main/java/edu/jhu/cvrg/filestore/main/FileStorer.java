@@ -1,12 +1,24 @@
 package edu.jhu.cvrg.filestore.main;
 
-import edu.jhu.cvrg.filestore.model.ECGFile;
+import java.util.List;
+
+import edu.jhu.cvrg.filestore.exception.FSException;
+import edu.jhu.cvrg.filestore.model.FSFile;
+import edu.jhu.cvrg.filestore.model.FSFolder;
 
 public abstract class FileStorer {
 	
-	public abstract boolean storeFile(ECGFile file, String folderPath, String userId);
+	public abstract FSFolder getFolder(long folderId) throws FSException;
+	public abstract FSFile getFile(long fileId, boolean referenceOnly) throws FSException;
+	public abstract FSFile getFileByNameAndFolder(long folderId, String fileName, boolean referenceOnly) throws FSException;
 	
-	public abstract boolean storeFiles();
+	public abstract List<FSFolder> getFolders(long folderId) throws FSException;
+	public abstract List<FSFile> getFiles(long folderId, boolean referenceOnly) throws FSException;
 	
-	public abstract boolean fileExists(String filename, String userIdentifier, String groupIdentifier);	
+	
+	public abstract FSFile addFile(long parentFolderId, String fileName, byte[] fileData) throws FSException;
+	public abstract FSFolder addFolder(long parentFolderId, String folderName) throws FSException;
+	
+	public abstract void deleteFile(long fileId) throws FSException;
+	public abstract void deleteFolder(long folderId) throws FSException;
 }

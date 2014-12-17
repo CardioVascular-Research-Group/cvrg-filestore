@@ -1,6 +1,5 @@
 package edu.jhu.cvrg.filestore.filetree;
 
-import java.util.UUID;
 
 public class FileSystemFileTree extends FileTree {
 
@@ -21,13 +20,13 @@ public class FileSystemFileTree extends FileTree {
 	}
 
 	@Override
-	public void addFolder(UUID parentNodeUuid, String newFolderName) {
+	public void addFolder(long parentNodeUuid, String newFolderName) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void deleteNode(UUID uuid) {
+	public void deleteNode(long uuid) {
 		// TODO Auto-generated method stub
 		
 	}
