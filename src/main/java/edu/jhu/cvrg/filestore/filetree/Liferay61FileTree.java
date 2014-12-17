@@ -13,6 +13,8 @@ import edu.jhu.cvrg.filestore.model.FSFolder;
 
 public class Liferay61FileTree extends FileTree {
 
+	private static final long serialVersionUID = -3353749155173931410L;
+	
 	private long waveformRootFolderId = 0L;
 	private long userRootFolderId = 0L;
 	private long userId = 0L;

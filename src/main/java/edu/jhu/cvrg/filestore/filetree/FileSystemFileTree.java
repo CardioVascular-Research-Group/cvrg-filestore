@@ -3,6 +3,8 @@ package edu.jhu.cvrg.filestore.filetree;
 
 public class FileSystemFileTree extends FileTree {
 
+	private static final long serialVersionUID = 1026672575639472250L;
+
 	public FileSystemFileTree(String[] args){
 		
 	}

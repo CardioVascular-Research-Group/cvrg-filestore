@@ -3,6 +3,8 @@ package edu.jhu.cvrg.filestore.filetree;
 
 public class HadoopFileTree extends FileTree{
 
+	private static final long serialVersionUID = 5594140097844299934L;
+
 	public HadoopFileTree(String[] args){
 		
 	}
