@@ -79,35 +79,18 @@ public class Liferay61FileTree extends FileTree {
 			return;
 		}
 		try {
+			long folderIdToDelete = -1; 
 			if(node.isFolder()){
-				long folderId = findFolderIDByName(node.getName());
-				filestore.deleteFolder(folderId);
+				folderIdToDelete = node.getUuid();
 			}
 			else{
-				FileNode parentNode = node.getParent();
-				long parentFolderId = findFolderIDByName(parentNode.getName());
-				long fileEntryId = findFileIDByName(node.getName(), parentFolderId);
-				filestore.deleteFile(fileEntryId);
+				folderIdToDelete = node.getParent().getUuid();
 			}
+			
+			filestore.deleteFolder(folderIdToDelete);
 		} catch (FSException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	private long findFileIDByName(String fileName, long parentFolderId){
-		try {
-			List<FSFile> files = filestore.getFiles(parentFolderId, true);
-			for (FSFile fileEntry : files) {
-				if (fileEntry.getName().equals(fileName)) {
-					return fileEntry.getId();
-				}
-			}
-		} catch (FSException e) {
-			getLog().error("Unable to retrieve folder " + fileName);
-			e.printStackTrace();
-		} 
-
-		return 0L;
 	}
 	
 	private FileNode findNodeByUuid(long nodeId){
