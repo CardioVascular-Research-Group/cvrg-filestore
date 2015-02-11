@@ -28,4 +28,10 @@ public class HadoopFileTree extends FileTree{
 	public FileNode getRoot() {
 		return null;
 	}
+
+	@Override
+	public FileNode getFileNodeByName(String fileName) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
