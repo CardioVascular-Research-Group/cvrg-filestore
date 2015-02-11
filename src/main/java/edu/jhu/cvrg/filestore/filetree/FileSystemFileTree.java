@@ -33,4 +33,10 @@ public class FileSystemFileTree extends FileTree {
 		
 	}
 
+	@Override
+	public FileNode getFileNodeByName(String fileName) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

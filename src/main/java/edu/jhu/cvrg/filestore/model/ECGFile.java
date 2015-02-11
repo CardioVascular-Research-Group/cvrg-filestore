@@ -1,5 +1,9 @@
 package edu.jhu.cvrg.filestore.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import edu.jhu.cvrg.filestore.enums.EnumFileExtension;
 import edu.jhu.cvrg.filestore.enums.EnumFileType;
 
 /*
@@ -37,7 +41,7 @@ public class ECGFile {
 	private EnumFileType fileType;
 	
 	private FSFile file;
-	private FSFile pair;
+	private Map<EnumFileExtension, FSFile> auxiliarFiles;
 	private String treePath;
 
 	public ECGFile(String subjectID, String recordName, String datatype, String studyID) {
@@ -112,12 +116,15 @@ public class ECGFile {
 		this.fileType = fileType;
 	}
 
-	public FSFile getPair() {
-		return pair;
+	public Map<EnumFileExtension, FSFile> getAuxiliarFiles() {
+		return auxiliarFiles;
 	}
 
-	public void setPair(FSFile pair) {
-		this.pair = pair;
+	public void addAuxFile(EnumFileExtension extension, FSFile file) {
+		if(auxiliarFiles == null){
+			auxiliarFiles = new HashMap<EnumFileExtension, FSFile>();
+		}
+		auxiliarFiles.put(extension, file);
 	}
 
 	public String getTreePath() {

@@ -14,4 +14,6 @@ public abstract class FileTree implements Serializable{
 	public abstract void deleteNode(long uuid);
 	
 	public abstract FileNode getRoot();
+	
+	public abstract FileNode getFileNodeByName(String fileName);
 }

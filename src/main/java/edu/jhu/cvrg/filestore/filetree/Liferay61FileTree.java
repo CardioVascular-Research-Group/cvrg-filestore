@@ -231,4 +231,37 @@ public class Liferay61FileTree extends FileTree {
 		}
 		return this.treeRoot;
 	}
+
+	@Override
+	public FileNode getFileNodeByName(String fileName) {
+		FileNode targetNode = findNodeByName(fileName, this.getRoot());
+		
+		return targetNode;
+	}
+	
+	
+	private FileNode findNodeByName(String name, FileNode startNode){
+
+		FileNode foundNode = null;
+		
+		if(startNode.getName().equals(name)){
+			return startNode;
+		}
+		List<FileNode> children = startNode.getChildren();
+		if(children != null){
+			for(FileNode childNode : children){
+				if(childNode.getName().equals(name)){
+					return childNode;
+				}
+	
+				if(childNode.getChildren() != null){
+					foundNode = findNodeByName(name, childNode);
+					if(foundNode != null){
+						break;
+					}
+				}
+			}
+		}
+		return foundNode;
+	}
 }
