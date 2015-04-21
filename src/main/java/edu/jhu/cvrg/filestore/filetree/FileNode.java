@@ -35,7 +35,7 @@ public class FileNode implements Serializable{
 			parentNode.addChild(this);
 		}
 		
-		System.out.println("New node created with UUID " + this.uuid);
+//		System.out.println("New node created with UUID " + this.uuid);
 	}
 	
 	public void addChild(FileNode newChildNode){
