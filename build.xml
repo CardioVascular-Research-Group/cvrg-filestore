@@ -60,18 +60,6 @@
 			<fileset dir="${app.server.deploy.dir}/axis2/WEB-INF/lib">
 			    <include name="${ant.project.name}*.jar"/>
 			</fileset>
-			<fileset dir="${portlets}/analyze-portlet/docroot/WEB-INF/lib">
-			    <include name="${ant.project.name}*.jar"/>
-			</fileset>
-			<fileset dir="${portlets}/upload-portlet/docroot/WEB-INF/lib">
-			    <include name="${ant.project.name}*.jar"/>
-			</fileset>
-			<fileset dir="${portlets}/download-portlet/docroot/WEB-INF/lib">
-			    <include name="${ant.project.name}*.jar"/>
-			</fileset>
-			<fileset dir="${portlets}/visualize-portlet/docroot/WEB-INF/lib">
-			    <include name="${ant.project.name}*.jar"/>
-			</fileset>
 		</delete>
 
 		<copy todir="/opt/liferay/portlet-ext" file="target/${ant.project.name}-${project.version}.jar" />
