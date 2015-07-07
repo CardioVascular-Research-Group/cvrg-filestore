@@ -3,8 +3,9 @@ package edu.jhu.cvrg.filestore.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.jhu.cvrg.data.enums.FileType;
 import edu.jhu.cvrg.filestore.enums.EnumFileExtension;
-import edu.jhu.cvrg.filestore.enums.EnumFileType;
+import edu.jhu.icm.ecgFormatConverter.ECGFile;
 
 /*
 Copyright 2014 Johns Hopkins University Institute for Computational Medicine
@@ -25,10 +26,8 @@ limitations under the License.
 * @author Mike Shipway, Chris Jurado
 * 
 */
-public class ECGFile {
+public class ECGFileMeta {
 
-	private int channels = 1;
-	private float sampFrequency = 250;
 	private String subjectID = "";
 	private int subjectAge = 71;
 	private String subjectSex = "Unknown";
@@ -36,16 +35,20 @@ public class ECGFile {
 	private String datatype = "";
 	private String studyID = "";
 	private String fileDate = "";
-	private int numberOfPoints = 0;
 	private String date = "1/1/2013";
-	private EnumFileType fileType;
-	
+//	private EnumFileType fileType;
+	private FileType fileType;
 	private FSFile file;
 	private Map<EnumFileExtension, FSFile> auxiliarFiles;
 	private String treePath;
+	private ECGFile ecgFileData;
+	
+	// Used for Eureka integration
+	private boolean virtual;
+	
+	public ECGFileMeta(String subjectID, String recordName, String datatype, String studyID) {
 
-	public ECGFile(String subjectID, String recordName, String datatype, String studyID) {
-
+		ecgFileData = new ECGFile(); 
 		this.subjectID = subjectID;
 		this.recordName = recordName;
 		this.datatype = datatype;
@@ -53,19 +56,20 @@ public class ECGFile {
 	}
 	
 	public void setChannels(int channels){
-		this.channels = channels;
+//		this.channels = channels;
+		this.ecgFileData.channels = channels;
 	}
 
 	public int getChannels() {
-		return channels;
+		return ecgFileData.channels;
 	}
 	
 	public void setSampFrequency(float frequency){
-		this.sampFrequency = frequency;
+		this.ecgFileData.samplingRate = frequency;
 	}
 
 	public float getSampFrequency() {
-		return sampFrequency;
+		return ecgFileData.samplingRate;
 	}
 
 	public String getSubjectID() {
@@ -97,22 +101,22 @@ public class ECGFile {
 	}
 	
 	public void setNumberOfPoints(int points){
-		this.numberOfPoints = points;
+		this.ecgFileData.samplesPerChannel = points;
 	}
 
 	public int getNumberOfPoints() {
-		return numberOfPoints;
+		return ecgFileData.samplesPerChannel;
 	}
 
 	public String getDate() {
 		return date;
 	}
 
-	public EnumFileType getFileType() {
+	public FileType getFileType() {
 		return fileType;
 	}
 	
-	public void setFileType(EnumFileType fileType){
+	public void setFileType(FileType fileType){
 		this.fileType = fileType;
 	}
 
@@ -141,6 +145,14 @@ public class ECGFile {
 
 	public void setFile(FSFile file) {
 		this.file = file;
+	}
+
+	public boolean isVirtual() {
+		return virtual;
+	}
+
+	public void setVirtual(boolean virtual) {
+		this.virtual = virtual;
 	}
 
 }
