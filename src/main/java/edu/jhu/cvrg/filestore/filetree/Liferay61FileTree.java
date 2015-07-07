@@ -48,7 +48,7 @@ public class Liferay61FileTree extends FileTree {
 		FSFolder rootFolder = getUserRootFolder();
 
 		if (rootFolder != null) {
-			treeRoot = new FileNode(null, rootFolder.getName(), rootFolder.getId());
+			treeRoot = new FileNode(null, rootFolder.getName(), rootFolder.getId(), true, EnumFileStoreType.LIFERAY_61);
 			addChildren(rootFolder, treeRoot);
 
 		} else {
@@ -63,10 +63,11 @@ public class Liferay61FileTree extends FileTree {
 		
 		long parentFolderId = parentNode.getUuid();
 		try {
-			FSFolder newFolder = filestore.addFolder(parentFolderId, newFolderName);
-			new FileNode(parentNode, newFolder.getName(), newFolder.getId());
+			FSFolder newFolder = filestore.addFolder(parentFolderId, newFolderName, false);
+			new FileNode(parentNode, newFolder.getName(), newFolder.getId(), true, EnumFileStoreType.LIFERAY_61);
 			
 		} catch (FSException e) {
+			getLog().error("Error on addFolder. ["+e.getMessage()+"]");
 			e.printStackTrace();
 		}
 	}
@@ -89,6 +90,7 @@ public class Liferay61FileTree extends FileTree {
 			
 			filestore.deleteFolder(folderIdToDelete);
 		} catch (FSException e) {
+			getLog().error("Error on deleteNode. ["+e.getMessage()+"]");
 			e.printStackTrace();
 		}
 	}
@@ -137,7 +139,7 @@ public class Liferay61FileTree extends FileTree {
 	private FSFolder createUserFolder() {
 
 		try {
-			return filestore.addFolder(waveformRootFolderId, String.valueOf(userId));
+			return filestore.addFolder(waveformRootFolderId, String.valueOf(userId), false);
 		} catch (FSException e) {
 			e.printStackTrace();
 		}
@@ -203,7 +205,7 @@ public class Liferay61FileTree extends FileTree {
 		try {
 			for (FSFile file : filestore.getFiles(parentFolder.getId(), true)) {
 				if(extentionFilter == null || extentionFilter.equalsIgnoreCase(file.getExtension())){
-					new FileNode(parentNode, file.getName(), file.getId(), false);	
+					new FileNode(parentNode, file.getNameWithoutExtension(), file.getId(), false, EnumFileStoreType.LIFERAY_61);	
 				}
 			}
 		} catch (FSException e) {
@@ -212,7 +214,7 @@ public class Liferay61FileTree extends FileTree {
 
 		try {
 			for (FSFolder childFolder : filestore.getFolders(parentFolder.getId())) {
-				addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true));
+				addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true, EnumFileStoreType.LIFERAY_61));
 			}
 
 		} catch (FSException e) {

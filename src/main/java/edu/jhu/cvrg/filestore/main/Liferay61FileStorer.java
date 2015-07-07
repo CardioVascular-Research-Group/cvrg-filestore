@@ -37,6 +37,7 @@ import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portlet.documentlibrary.DuplicateFileException;
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
 
@@ -176,7 +177,7 @@ public class Liferay61FileStorer extends FileStorer{
 	}
 
 	@Override
-	public synchronized FSFile addFile(long parentFolderId, String fileName, byte[] fileData) throws FSException {
+	public synchronized FSFile addFile(long parentFolderId, String fileName, byte[] fileData, boolean shared) throws FSException {
 		try {
 			
 			FSFolder parentFolder  = this.getFolder(parentFolderId);
@@ -188,7 +189,41 @@ public class Liferay61FileStorer extends FileStorer{
 			ServiceContext service = LiferayFacesContext.getInstance().getServiceContext();
 			FileEntry newFile = DLAppLocalServiceUtil.addFileEntry(userId, groupId, parentFolderId, fileName, "", fileName, "", "1.0", fileData, service);
 			
-			return new FSFile(newFile.getFileEntryId(), newFile.getTitle(), newFile.getExtension(), newFile.getFolderId(), fileData, newFile.getSize());
+			if(newFile != null) {
+				Role userRole = RoleLocalServiceUtil.getRole(companyId, FileStoreConstants.AXIS_USER_ROLE_NAME);
+				ResourcePermission resourcePermission = null;
+
+				resourcePermission = ResourcePermissionLocalServiceUtil.createResourcePermission(CounterLocalServiceUtil.increment());
+				resourcePermission.setCompanyId(companyId);
+				resourcePermission.setName(DLFileEntry.class.getName());
+				resourcePermission.setScope(ResourceConstants.SCOPE_INDIVIDUAL);
+				resourcePermission.setPrimKey(String.valueOf(newFile.getPrimaryKey()));
+				resourcePermission.setRoleId(userRole.getRoleId());
+				
+				ResourceAction resourceActionDelete = ResourceActionLocalServiceUtil.getResourceAction(DLFolder.class.getName(), ActionKeys.DELETE);
+				ResourceAction resourceActionView = ResourceActionLocalServiceUtil.getResourceAction(DLFolder.class.getName(), ActionKeys.VIEW);
+				resourcePermission.setActionIds(resourceActionDelete.getBitwiseValue()+resourceActionView.getBitwiseValue());
+				ResourcePermissionLocalServiceUtil.addResourcePermission(resourcePermission);
+				
+				if(shared){
+					userRole = RoleLocalServiceUtil.getRole(companyId, FileStoreConstants.SITE_MEMBER_ROLE_NAME);
+					
+					resourcePermission = ResourcePermissionLocalServiceUtil.createResourcePermission(CounterLocalServiceUtil.increment());
+					resourcePermission.setCompanyId(companyId);
+					resourcePermission.setName(DLFileEntry.class.getName());
+					resourcePermission.setScope(ResourceConstants.SCOPE_INDIVIDUAL);
+					resourcePermission.setPrimKey(String.valueOf(newFile.getPrimaryKey()));
+					resourcePermission.setRoleId(userRole.getRoleId());
+					
+					resourcePermission.setActionIds(resourceActionView.getBitwiseValue());
+					ResourcePermissionLocalServiceUtil.addResourcePermission(resourcePermission);	
+				}
+				
+				return new FSFile(newFile.getFileEntryId(), newFile.getTitle(), newFile.getExtension(), newFile.getFolderId(), fileData, newFile.getSize());
+			}else {
+				throw new FSException("Please select a file");
+			}
+			
 			
 		} catch(DuplicateFileException e){
 			log.error(e.getStackTrace());
@@ -203,7 +238,7 @@ public class Liferay61FileStorer extends FileStorer{
 	}
 
 	@Override
-	public synchronized FSFolder addFolder(long parentFolderId, String folderName) throws FSException{
+	public synchronized FSFolder addFolder(long parentFolderId, String folderName, boolean shared) throws FSException{
 		Folder newFolder = null;
 		Semaphore s = Semaphore.getCreateFolderSemaphore();	
 		folderName = Liferay61FileStorer.convertToLiferayFolderName(folderName);
@@ -243,9 +278,6 @@ public class Liferay61FileStorer extends FileStorer{
 			}
 
 			if(newFolder != null) {
-				StringBuilder treePath = new StringBuilder();
-				extractFolderHierachic(newFolder, treePath);
-				
 				Role userRole = RoleLocalServiceUtil.getRole(companyId, FileStoreConstants.AXIS_USER_ROLE_NAME);
 				ResourcePermission resourcePermission = null;
 
@@ -262,6 +294,20 @@ public class Liferay61FileStorer extends FileStorer{
 				ResourceAction resourceActionAddDoc = ResourceActionLocalServiceUtil.getResourceAction(DLFolder.class.getName(), ActionKeys.ADD_DOCUMENT);
 				resourcePermission.setActionIds(resourceActionDelete.getBitwiseValue()+resourceActionView.getBitwiseValue()+resourceActionAccess.getBitwiseValue()+resourceActionAddDoc.getBitwiseValue());
 				ResourcePermissionLocalServiceUtil.addResourcePermission(resourcePermission);
+				
+				if(shared){
+					userRole = RoleLocalServiceUtil.getRole(companyId, FileStoreConstants.SITE_MEMBER_ROLE_NAME);
+					
+					resourcePermission = ResourcePermissionLocalServiceUtil.createResourcePermission(CounterLocalServiceUtil.increment());
+					resourcePermission.setCompanyId(companyId);
+					resourcePermission.setName(DLFolder.class.getName());
+					resourcePermission.setScope(ResourceConstants.SCOPE_INDIVIDUAL);
+					resourcePermission.setPrimKey(String.valueOf(newFolder.getPrimaryKey()));
+					resourcePermission.setRoleId(userRole.getRoleId());
+					
+					resourcePermission.setActionIds(resourceActionView.getBitwiseValue()+resourceActionAccess.getBitwiseValue()+resourceActionAddDoc.getBitwiseValue());
+					ResourcePermissionLocalServiceUtil.addResourcePermission(resourcePermission);
+				}
 				
 				return new FSFolder(newFolder.getFolderId(), newFolder.getName(), newFolder.getParentFolderId());
 			}else {

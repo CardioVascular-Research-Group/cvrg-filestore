@@ -5,5 +5,6 @@ public enum EnumFileStoreType {
 		LIFERAY_61,
 		HADOOP,
 		FILE_SYSTEM,
-		POSTGRESSQL;
+		POSTGRESSQL,
+		VIRTUAL_DB;
 }

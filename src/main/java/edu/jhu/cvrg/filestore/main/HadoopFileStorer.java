@@ -33,14 +33,14 @@ public class HadoopFileStorer extends FileStorer {
 	}
 
 	@Override
-	public FSFile addFile(long parentFolderId, String fileName, byte[] fileData)
+	public FSFile addFile(long parentFolderId, String fileName, byte[] fileData, boolean shared)
 			throws FSException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public FSFolder addFolder(long parentFolderId, String folderName)
+	public FSFolder addFolder(long parentFolderId, String folderName, boolean shared)
 			throws FSException {
 		// TODO Auto-generated method stub
 		return null;

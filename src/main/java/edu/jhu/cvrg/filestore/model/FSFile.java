@@ -38,4 +38,8 @@ public class FSFile extends FSBase{
 		return fileSize;
 	}
 	
+	public String getNameWithoutExtension(){
+		
+		return this.getName().substring(0, this.getName().lastIndexOf(extension)-1);
+	}
 }

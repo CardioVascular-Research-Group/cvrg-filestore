@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.jhu.cvrg.filestore.enums.EnumFileStoreType;
+
 public class FileNode implements Serializable{
 
 	private static final long serialVersionUID = -121741741906128195L;
@@ -17,15 +19,9 @@ public class FileNode implements Serializable{
 	private long uuid ;
 	private String name = "";
 	
-	public FileNode(FileNode parentNode, String name, long uuid){
-		initialize(parentNode, name, uuid, true);
-	}
+	private EnumFileStoreType storeStrategy;
 	
-	public FileNode(FileNode parentNode, String name, long uuid, boolean isFolder){
-		initialize(parentNode, name, uuid, isFolder);
-	}
-	
-	private void initialize(FileNode parentNode, String name, long uuid, boolean isFolder){
+	public FileNode(FileNode parentNode, String name, long uuid, boolean isFolder, EnumFileStoreType storeStrategy){
 		this.name = name;
 		this.parentNode = parentNode;
 		this.uuid = uuid;
@@ -34,6 +30,8 @@ public class FileNode implements Serializable{
 		if(parentNode!=null){
 			parentNode.addChild(this);
 		}
+		
+		this.storeStrategy = storeStrategy;
 		
 //		System.out.println("New node created with UUID " + this.uuid);
 	}
@@ -93,5 +91,9 @@ public class FileNode implements Serializable{
 
 	public void setAnalysisJobId(Long analysisJobId) {
 		this.analysisJobId = analysisJobId;
+	}
+
+	public EnumFileStoreType getStoreStrategy() {
+		return storeStrategy;
 	}
 }

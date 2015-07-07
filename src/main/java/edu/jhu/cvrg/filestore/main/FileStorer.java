@@ -16,8 +16,8 @@ public abstract class FileStorer {
 	public abstract List<FSFile> getFiles(long folderId, boolean referenceOnly) throws FSException;
 	
 	
-	public abstract FSFile addFile(long parentFolderId, String fileName, byte[] fileData) throws FSException;
-	public abstract FSFolder addFolder(long parentFolderId, String folderName) throws FSException;
+	public abstract FSFile addFile(long parentFolderId, String fileName, byte[] fileData, boolean shared) throws FSException;
+	public abstract FSFolder addFolder(long parentFolderId, String folderName, boolean shared) throws FSException;
 	
 	public abstract void deleteFile(long fileId) throws FSException;
 	public abstract void deleteFolder(long folderId) throws FSException;
