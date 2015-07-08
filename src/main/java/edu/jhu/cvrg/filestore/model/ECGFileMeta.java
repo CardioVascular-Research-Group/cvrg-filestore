@@ -5,7 +5,7 @@ import java.util.Map;
 
 import edu.jhu.cvrg.data.enums.FileType;
 import edu.jhu.cvrg.filestore.enums.EnumFileExtension;
-import edu.jhu.icm.ecgFormatConverter.ECGFile;
+import edu.jhu.icm.ecgFormatConverter.ECGFileData;
 
 /*
 Copyright 2014 Johns Hopkins University Institute for Computational Medicine
@@ -41,14 +41,14 @@ public class ECGFileMeta {
 	private FSFile file;
 	private Map<EnumFileExtension, FSFile> auxiliarFiles;
 	private String treePath;
-	private ECGFile ecgFileData;
+	private ECGFileData ecgFileData;
 	
 	// Used for Eureka integration
 	private boolean virtual;
 	
 	public ECGFileMeta(String subjectID, String recordName, String datatype, String studyID) {
 
-		ecgFileData = new ECGFile(); 
+		ecgFileData = new ECGFileData(); 
 		this.subjectID = subjectID;
 		this.recordName = recordName;
 		this.datatype = datatype;
