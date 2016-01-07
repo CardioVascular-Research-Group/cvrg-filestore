@@ -1,5 +1,19 @@
 package edu.jhu.cvrg.filestore.filetree;
+/*
+Copyright 2013 Johns Hopkins University Institute for Computational Medicine
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +32,11 @@ public class FileNode implements Serializable{
 	private boolean isFolder = true;
 	private long uuid ;
 	private String name = "";
+	private String originalFileName = null;
 	
 	private EnumFileStoreType storeStrategy;
 	
-	public FileNode(FileNode parentNode, String name, long uuid, boolean isFolder, EnumFileStoreType storeStrategy){
+	public FileNode(FileNode parentNode, String name, long uuid, boolean isFolder, EnumFileStoreType storeStrategy, String originalFileName){
 		this.name = name;
 		this.parentNode = parentNode;
 		this.uuid = uuid;
@@ -30,10 +45,8 @@ public class FileNode implements Serializable{
 		if(parentNode!=null){
 			parentNode.addChild(this);
 		}
-		
 		this.storeStrategy = storeStrategy;
-		
-//		System.out.println("New node created with UUID " + this.uuid);
+		this.originalFileName = originalFileName;
 	}
 	
 	public void addChild(FileNode newChildNode){
@@ -41,7 +54,6 @@ public class FileNode implements Serializable{
 		if(childNodes == null){
 			childNodes = new ArrayList<FileNode>();
 		}
-		
 		childNodes.add(newChildNode);
 	}
 	
@@ -95,5 +107,9 @@ public class FileNode implements Serializable{
 
 	public EnumFileStoreType getStoreStrategy() {
 		return storeStrategy;
+	}
+
+	public String getOriginalFileName() {
+		return originalFileName;
 	}
 }
