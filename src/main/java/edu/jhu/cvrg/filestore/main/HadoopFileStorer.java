@@ -8,6 +8,8 @@ import edu.jhu.cvrg.filestore.model.FSFolder;
 
 public class HadoopFileStorer extends FileStorer {
 
+	private static final long serialVersionUID = 4047523751220010501L;
+
 	@Override
 	public FSFolder getFolder(long folderId) throws FSException {
 		// TODO Auto-generated method stub
