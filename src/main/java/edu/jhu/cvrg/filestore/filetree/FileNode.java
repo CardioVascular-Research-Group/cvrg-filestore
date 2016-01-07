@@ -47,6 +47,7 @@ public class FileNode implements Serializable{
 		}
 		this.storeStrategy = storeStrategy;
 		this.originalFileName = originalFileName;
+		this.originalFileName = originalFileName;
 	}
 	
 	public void addChild(FileNode newChildNode){
