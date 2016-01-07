@@ -1,5 +1,19 @@
 package edu.jhu.cvrg.filestore.filetree;
+/*
+Copyright 2013 Johns Hopkins University Institute for Computational Medicine
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -48,7 +62,7 @@ public class Liferay61FileTree extends FileTree {
 		FSFolder rootFolder = getUserRootFolder();
 
 		if (rootFolder != null) {
-			treeRoot = new FileNode(null, rootFolder.getName(), rootFolder.getId(), true, EnumFileStoreType.LIFERAY_61);
+			treeRoot = new FileNode(null, rootFolder.getName(), rootFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null);
 			addChildren(rootFolder, treeRoot);
 
 		} else {
@@ -64,7 +78,7 @@ public class Liferay61FileTree extends FileTree {
 		long parentFolderId = parentNode.getUuid();
 		try {
 			FSFolder newFolder = filestore.addFolder(parentFolderId, newFolderName, false);
-			new FileNode(parentNode, newFolder.getName(), newFolder.getId(), true, EnumFileStoreType.LIFERAY_61);
+			new FileNode(parentNode, newFolder.getName(), newFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null);
 			
 		} catch (FSException e) {
 			getLog().error("Error on addFolder. ["+e.getMessage()+"]");
@@ -204,8 +218,9 @@ public class Liferay61FileTree extends FileTree {
 
 		try {
 			for (FSFile file : filestore.getFiles(parentFolder.getId(), true)) {
-				if(extentionFilter == null || extentionFilter.equalsIgnoreCase(file.getExtension())){
-					new FileNode(parentNode, file.getNameWithoutExtension(), file.getId(), false, EnumFileStoreType.LIFERAY_61);	
+				if(parentFolder.getName().equals(file.getNameWithoutExtension())){
+					new FileNode(parentNode, file.getNameWithoutExtension(), file.getId(), false, EnumFileStoreType.LIFERAY_61, file.getName());
+					break;
 				}
 			}
 		} catch (FSException e) {
@@ -214,7 +229,7 @@ public class Liferay61FileTree extends FileTree {
 
 		try {
 			for (FSFolder childFolder : filestore.getFolders(parentFolder.getId())) {
-				addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true, EnumFileStoreType.LIFERAY_61));
+				addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null));
 			}
 
 		} catch (FSException e) {
@@ -246,13 +261,13 @@ public class Liferay61FileTree extends FileTree {
 
 		FileNode foundNode = null;
 		
-		if(startNode.getName().equals(name)){
+		if(name.equals(startNode.getOriginalFileName()) && !startNode.isFolder()){
 			return startNode;
 		}
 		List<FileNode> children = startNode.getChildren();
 		if(children != null){
 			for(FileNode childNode : children){
-				if(childNode.getName().equals(name)){
+				if(name.equals(childNode.getOriginalFileName()) && !childNode.isFolder()){
 					return childNode;
 				}
 	

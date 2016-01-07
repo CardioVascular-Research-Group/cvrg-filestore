@@ -25,6 +25,8 @@ import org.apache.log4j.Logger;
 
 import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.faces.portal.context.LiferayFacesContext;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.model.ResourceAction;
@@ -49,6 +51,8 @@ import edu.jhu.cvrg.filestore.util.Semaphore;
 
 public class Liferay61FileStorer extends FileStorer{
 	
+	private static final long serialVersionUID = -8529264280846485905L;
+	
 	private long groupId;
 	private long userId;
 	private long companyId;
@@ -60,7 +64,6 @@ public class Liferay61FileStorer extends FileStorer{
 		patterns.add(new String[]{"[\n\r]", ""});
 	}
 	
-	
 	public Liferay61FileStorer(String[] args){
 		this.groupId = Long.valueOf(args[0]);
 		this.userId = Long.valueOf(args[1]);
@@ -69,11 +72,8 @@ public class Liferay61FileStorer extends FileStorer{
 
 	@Override
 	public FSFolder getFolder(long folderId) throws FSException {
-		
 		try {
-			
 			Folder folder = DLAppLocalServiceUtil.getFolder(folderId);
-			
 			return new FSFolder(folder.getFolderId(), folder.getName(), folder.getParentFolderId());
 		} catch (Exception e) {
 			log.warn("Folder ID [" + folderId + "] does not exists.");
@@ -84,15 +84,12 @@ public class Liferay61FileStorer extends FileStorer{
 	@Override
 	public FSFile getFile(long fileId, boolean referenceOnly) throws FSException {
 		try {
-			
 			FileEntry file = DLAppLocalServiceUtil.getFileEntry(fileId);
-			
 			byte[] data = null;
 			if(!referenceOnly){
 				data = new byte[Long.valueOf(file.getSize()).intValue()];
 				file.getContentStream().read((data));
 			}
-			
 			return new FSFile(file.getFileEntryId(), file.getTitle(), file.getExtension(), file.getFolderId(), data, file.getSize());
 		} catch (Exception e) {
 			log.warn("File ID [" + fileId + "] does not exists.");
@@ -103,25 +100,20 @@ public class Liferay61FileStorer extends FileStorer{
 	@Override
 	public FSFile getFileByNameAndFolder(long folderId, String fileName, boolean referenceOnly) throws FSException {
 		try {
-			
 			List<FileEntry> filesInFolder = DLAppLocalServiceUtil.getFileEntries(groupId, folderId);
-			
 			FileEntry file = null;
-			
 			for (FileEntry f : filesInFolder) {
 				if(f.getTitle().equals(fileName)){
 					file = f;
 					break;
 				}
 			}
-			
 			if(file != null){
 				byte[] data = null;
 				if(!referenceOnly){
 					data = new byte[Long.valueOf(file.getSize()).intValue()];
 					file.getContentStream().read((data));
 				}
-				
 				return new FSFile(file.getFileEntryId(), file.getTitle(), file.getExtension(), file.getFolderId(), data, file.getSize());
 			}
 		} catch (Exception e) {
@@ -133,17 +125,14 @@ public class Liferay61FileStorer extends FileStorer{
 	@Override
 	public List<FSFolder> getFolders(long folderId) throws FSException {
 		try {
-			
-			List<Folder> subFolders = DLAppLocalServiceUtil.getFolders(groupId, folderId);
-			
+			List<Folder> subFolders = DLAppLocalServiceUtil.getFolders(groupId, folderId);		
 			if(subFolders != null){
 				List<FSFolder> fsSubFolders = new ArrayList<FSFolder>();
 				for (Folder sub : subFolders) {
 					fsSubFolders.add(new FSFolder(sub.getFolderId(), sub.getName(), sub.getParentFolderId()));
 				}
 				return fsSubFolders;
-			}
-			
+			}	
 		} catch (Exception e) {
 			log.warn("Folder ID [" + folderId + "] does not exists.");
 		}
@@ -153,9 +142,7 @@ public class Liferay61FileStorer extends FileStorer{
 	@Override
 	public List<FSFile> getFiles(long folderId, boolean referenceOnly) throws FSException {
 		try {
-			
 			List<FileEntry> files = DLAppLocalServiceUtil.getFileEntries(groupId, folderId);
-			
 			if(files != null){
 				List<FSFile> fsSubFolders = new ArrayList<FSFile>();
 				for (FileEntry f : files) {
@@ -165,7 +152,6 @@ public class Liferay61FileStorer extends FileStorer{
 						f.getContentStream().read((data));
 					}
 					fsSubFolders.add(new FSFile(f.getFileEntryId(), f.getTitle(), f.getExtension(), f.getFolderId(), data, f.getSize()));
-				
 				}
 				return fsSubFolders;
 			}
@@ -179,14 +165,19 @@ public class Liferay61FileStorer extends FileStorer{
 	@Override
 	public synchronized FSFile addFile(long parentFolderId, String fileName, byte[] fileData, boolean shared) throws FSException {
 		try {
-			
 			FSFolder parentFolder  = this.getFolder(parentFolderId);
 			if(parentFolder == null){
 				throw new FSException("Folder ID [" + parentFolderId + "] does not exists.");
 			}
 			
 			//TODO [VILARDO] DEFINE THE FILE TYPE
-			ServiceContext service = LiferayFacesContext.getInstance().getServiceContext();
+			ServiceContext service = new ServiceContext();
+			service.setScopeGroupId(groupId);
+			service.setAddGroupPermissions(true);
+			
+			service.setUserId(userId);
+			service.setWorkflowAction(1);
+			
 			FileEntry newFile = DLAppLocalServiceUtil.addFileEntry(userId, groupId, parentFolderId, fileName, "", fileName, "", "1.0", fileData, service);
 			
 			if(newFile != null) {
@@ -223,8 +214,6 @@ public class Liferay61FileStorer extends FileStorer{
 			}else {
 				throw new FSException("Please select a file");
 			}
-			
-			
 		} catch(DuplicateFileException e){
 			log.error(e.getStackTrace());
 			e.printStackTrace();
@@ -242,15 +231,14 @@ public class Liferay61FileStorer extends FileStorer{
 		Folder newFolder = null;
 		Semaphore s = Semaphore.getCreateFolderSemaphore();	
 		folderName = Liferay61FileStorer.convertToLiferayFolderName(folderName);
-		
 		try {
 			s.take();
-			
 			FSFolder parentFolder  = this.getFolder(parentFolderId);
 			if(parentFolder == null){
 				throw new FSException("Folder ID [" + parentFolderId + "] does not exists.");
+			}else if(folderName.equals(parentFolder.getName())){
+				return parentFolder;
 			}
-			
 			List<FSFolder> subFolders = this.getFolders(parentFolderId);
 			if (subFolders != null) {
 				for (FSFolder subFolder : subFolders) {
@@ -357,7 +345,6 @@ public class Liferay61FileStorer extends FileStorer{
 		} catch (Exception e) {
 			throw new FSException("Error on file delete.", e);
 		}
-		
 	}
 
 	@Override
@@ -366,8 +353,6 @@ public class Liferay61FileStorer extends FileStorer{
 			DLAppLocalServiceUtil.deleteFolder(folderId);
 		} catch (Exception e) {
 			throw new FSException("Error on folder delete.", e);
-		}
-		
+		}	
 	}
-	
 }
