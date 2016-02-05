@@ -18,6 +18,17 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.security.permission.ActionKeys;
+import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portal.security.permission.PermissionThreadLocal;
+import com.liferay.portlet.documentlibrary.model.DLFolder;
+import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.service.permission.DLFolderPermission;
+
 import edu.jhu.cvrg.filestore.enums.EnumFileStoreType;
 import edu.jhu.cvrg.filestore.exception.FSException;
 import edu.jhu.cvrg.filestore.main.FileStoreFactory;
@@ -32,27 +43,36 @@ public class Liferay61FileTree extends FileTree {
 	private long waveformRootFolderId = 0L;
 	private long userRootFolderId = 0L;
 	private long userId = 0L;
+	private long groupId = 0L;
 	private FileNode treeRoot;
 	private FileStorer filestore;
 	private String extentionFilter = "hea";
 
 	public Liferay61FileTree(String[] args) {
+		System.out.println("Number of arguments is " + args.length);
+		for(String argument: args){
+			System.out.println(argument);
+		}
 
 		//args[0] = GROUP ID
+		this.groupId = Long.valueOf(args[0]);
 		this.userId = Long.valueOf(args[1]);
 		//args[2] = COMPANY ID
 		
 		filestore = FileStoreFactory.returnFileStore(EnumFileStoreType.LIFERAY_61, args);
 		
-		if (args.length > 3) {
-			waveformRootFolderId = findFolderIDByName(args[3]);
-		}
-		if (args.length > 4) {
-			userRootFolderId = findFolderIDByName(args[4]);
-			if (userRootFolderId == 0L) {
-				userRootFolderId = createUserFolder().getId();
-			}
-		}
+		waveformRootFolderId = findFolderIDByName(args[3]);
+		
+		userRootFolderId = waveformRootFolderId;
+//		if (args.length > 3) {
+//			waveformRootFolderId = findFolderIDByName(args[3]);
+//		}
+//		if (args.length > 4) {
+//			userRootFolderId = findFolderIDByName(args[4]);
+//			if (userRootFolderId == 0L) {
+//				userRootFolderId = createUserFolder().getId();
+//			}
+//		}
 		buildTree();
 	}
 
@@ -218,10 +238,10 @@ public class Liferay61FileTree extends FileTree {
 
 		try {
 			for (FSFile file : filestore.getFiles(parentFolder.getId(), true)) {
-				if(parentFolder.getName().equals(file.getNameWithoutExtension())){
-					new FileNode(parentNode, file.getNameWithoutExtension(), file.getId(), false, EnumFileStoreType.LIFERAY_61, file.getName());
-					break;
-				}
+					if(parentFolder.getName().equals(file.getNameWithoutExtension())){
+						new FileNode(parentNode, file.getNameWithoutExtension(), file.getId(), false, EnumFileStoreType.LIFERAY_61, file.getName());
+						break;
+					}
 			}
 		} catch (FSException e) {
 			e.printStackTrace();
@@ -229,12 +249,34 @@ public class Liferay61FileTree extends FileTree {
 
 		try {
 			for (FSFolder childFolder : filestore.getFolders(parentFolder.getId())) {
-				addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null));
+				System.out.println("Checking folder permission for " + childFolder.getName());
+				if(hasPermission(childFolder)){
+					System.out.println(childFolder.getName() + "permissions granted.");
+					addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null));
+				}
+				else System.out.println(childFolder.getName() + "permissions denied.");
 			}
 
 		} catch (FSException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private boolean hasPermission(FSFolder folder){
+		try {
+			DLFolder dlFolder = DLFolderLocalServiceUtil.getDLFolder(folder.getId());
+			PermissionChecker permissionChecker = PermissionThreadLocal.getPermissionChecker();	
+			DLFolderPermission.check(permissionChecker, groupId, dlFolder.getFolderId(), ActionKeys.VIEW);
+		} catch (PortalException e) {
+			System.out.println("Something break?  Portal Exception");
+			e.printStackTrace();
+			return false;
+		} catch (SystemException e) {
+			System.out.println("Something break?  System Exception");
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 
 	private Logger getLog() {
