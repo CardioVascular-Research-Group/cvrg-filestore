@@ -249,12 +249,9 @@ public class Liferay61FileTree extends FileTree {
 
 		try {
 			for (FSFolder childFolder : filestore.getFolders(parentFolder.getId())) {
-				System.out.println("Checking folder permission for " + childFolder.getName());
 				if(hasPermission(childFolder)){
-					System.out.println(childFolder.getName() + "permissions granted.");
 					addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null));
 				}
-				else System.out.println(childFolder.getName() + "permissions denied.");
 			}
 
 		} catch (FSException e) {
