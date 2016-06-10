@@ -47,6 +47,7 @@ public class Liferay61FileTree extends FileTree {
 	private FileNode treeRoot;
 	private FileStorer filestore;
 	private String extentionFilter = "hea";
+	private boolean groupFolder = false;
 
 	public Liferay61FileTree(String[] args) {
 		System.out.println("Number of arguments is " + args.length);
@@ -54,36 +55,38 @@ public class Liferay61FileTree extends FileTree {
 			System.out.println(argument);
 		}
 
-		//args[0] = GROUP ID
 		this.groupId = Long.valueOf(args[0]);
 		this.userId = Long.valueOf(args[1]);
 		//args[2] = COMPANY ID
+		if (args.length > 3) {
+			waveformRootFolderId = findFolderIDByName(args[3]);
+		}
 		
 		filestore = FileStoreFactory.returnFileStore(EnumFileStoreType.LIFERAY_61, args);
-		
-		waveformRootFolderId = findFolderIDByName(args[3]);
-		
-		userRootFolderId = waveformRootFolderId;
-//		if (args.length > 3) {
-//			waveformRootFolderId = findFolderIDByName(args[3]);
-//		}
-//		if (args.length > 4) {
-//			userRootFolderId = findFolderIDByName(args[4]);
-//			if (userRootFolderId == 0L) {
-//				userRootFolderId = createUserFolder().getId();
-//			}
-//		}
+		userRootFolderId = findFolderIDByName(args[1]);
+		if (userRootFolderId == 0L) {
+			userRootFolderId = createUserFolder().getId();
+		}
+//		userRootFolderId = waveformRootFolderId;
+
+		if(args.length > 4){
+			userRootFolderId = waveformRootFolderId;
+			groupFolder = true;
+		}
+
 		buildTree();
 	}
 
 	@Override
 	protected void buildTree() {
 
-		FSFolder rootFolder = getUserRootFolder();
+		FSFolder userRootFolder = getUserRootFolder();
+		FSFolder waveformRootFolder = getWaveformRootFolder();
 
-		if (rootFolder != null) {
-			treeRoot = new FileNode(null, rootFolder.getName(), rootFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null);
-			addChildren(rootFolder, treeRoot);
+		if (userRootFolder != null && waveformRootFolder != null) {
+			treeRoot = new FileNode(null, waveformRootFolder.getName(), waveformRootFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null);
+			
+			addChildren(waveformRootFolder, treeRoot);
 
 		} else {
 			getLog().error(waveformRootFolderId + " folder does not exist");
@@ -169,6 +172,15 @@ public class Liferay61FileTree extends FileTree {
 			return createUserFolder();
 		}
 	}
+	
+	private FSFolder getWaveformRootFolder(){
+		try {
+			return filestore.getFolder(waveformRootFolderId);
+		} catch (FSException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 
 	private FSFolder createUserFolder() {
 
@@ -210,28 +222,30 @@ public class Liferay61FileTree extends FileTree {
 	}
 
 	private long findFolderIDByName(String folderName) {
-
-		return searchFolderTreeByName(0L, folderName);
 		
-//		int folderCount;
-//		try {
-//			folderCount = DLFolderLocalServiceUtil.getDLFoldersCount();
-//
-//			List<DLFolder> folders = DLFolderLocalServiceUtil.getDLFolders(0, folderCount - 1);
-//			for (DLFolder folder : folders) {
-//				System.out.println("Checking against folder " + folder.getName());
-//				if (folder.getName().equals(folderName)) {
-//					System.out.println("Found folder.");
-//					return folder.getFolderId();
-//				}
-//			}
-//
-//		} catch (SystemException e) {
-//			getLog().error("Unable to retrieve folder " + folderName);
-//			e.printStackTrace();
-//		}
-//		System.out.println("Didn't find folder.");
-//		return 0L;
+		System.out.println("Folder name is " + folderName);
+
+//		return searchFolderTreeByName(0L, folderName);
+		
+		int folderCount;
+		try {
+			folderCount = DLFolderLocalServiceUtil.getDLFoldersCount();
+
+			List<DLFolder> folders = DLFolderLocalServiceUtil.getDLFolders(0, folderCount);
+			for (DLFolder folder : folders) {
+				System.out.println("Checking against folder " + folder.getName());
+				if (folder.getName().equals(folderName)) {
+					System.out.println("Found folder.");
+					return folder.getFolderId();
+				}
+			}
+
+		} catch (SystemException e) {
+			getLog().error("Unable to retrieve folder " + folderName);
+			e.printStackTrace();
+		}
+		System.out.println("Didn't find folder.");
+		return 0L;
 	}
 
 	private void addChildren(FSFolder parentFolder, FileNode parentNode) {
@@ -250,7 +264,9 @@ public class Liferay61FileTree extends FileTree {
 		try {
 			for (FSFolder childFolder : filestore.getFolders(parentFolder.getId())) {
 				if(hasPermission(childFolder)){
-					addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null));
+					if(!(groupFolder && childFolder.getName().equals(String.valueOf(this.userId)))){
+						addChildren(childFolder, new FileNode(parentNode, childFolder.getName(), childFolder.getId(), true, EnumFileStoreType.LIFERAY_61, null));
+					}
 				}
 			}
 
